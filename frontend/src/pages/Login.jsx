@@ -2,7 +2,7 @@ import './Login.css';
 import { useState } from "react";
 
 export default function Login() {
-  const [inputValue, setInputValue] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   async function handleLogin() {
@@ -10,13 +10,19 @@ export default function Login() {
       const res = await fetch("http://localhost:5000/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: inputValue, password }),
+        body: JSON.stringify({ email, password }), // match backend
       });
 
       const data = await res.json();
-      console.log(data); // handle success/failure
+
+      if (res.ok) {
+        alert("Logged in successfully!"); // clear success message
+      } else {
+        alert("Login failed: " + (data.error || "User not found"));
+      }
     } catch (err) {
-      console.error("Login failed", err);
+      console.error(err);
+      alert("Server error. Try again later.");
     }
   }
 
@@ -25,10 +31,10 @@ export default function Login() {
       <h1 className="login-title">Log In</h1>
       <input
         type="text"
-        placeholder="Email or username"
+        placeholder="Email"
         className="login-input"
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
       />
       <input
         type="password"
