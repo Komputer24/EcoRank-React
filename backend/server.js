@@ -5,7 +5,23 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// CORS: allow localhost in dev and your frontend in production
+const allowedOrigins = [
+   process.env.FRONTEND_URL,    // production frontend
+  'http://localhost:5173'       // local dev frontend
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+}));
+
 app.use(express.json());
 
 // Initialize Supabase client
@@ -44,8 +60,8 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-
-// Start server
-app.listen(5000, "0.0.0.0", () => {
-  console.log("Server running on all interfaces");
-}); 
+// Use dynamic port for hosting
+const PORT = process.env.PORT || 5000; 
+app.listen(PORT, "0.0.0.0", () => { 
+  console.log(`Server running on port: ${PORT}`); 
+});
