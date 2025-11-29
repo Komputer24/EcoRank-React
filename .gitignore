@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 /backend/.env
-/frontend/.env
+supabase_secret.txt
