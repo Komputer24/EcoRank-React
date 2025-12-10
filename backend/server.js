@@ -11,7 +11,7 @@ const app = express();
 
 // Allowed origins (dev + production)
 const allowedOrigins = [
-  process.env.FRONTEND_URL,   // your production frontend
+  process.env.FRONTEND_URL,   // production frontend
   "http://localhost:5174"     // local dev frontend
 ];
 
@@ -21,7 +21,8 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      // Do not throw an error — just block with a response
+      callback(null, false);
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -31,14 +32,20 @@ app.use(cors({
 // Handle preflight OPTIONS requests
 app.options("*", cors());
 
+// Body parser
 app.use(express.json());
+
+// Health check route (optional but useful)
+app.get("/", (req, res) => {
+  res.json({ status: "Server is running" });
+});
 
 // API routes
 app.use("/api", authRoutes);
 app.use("/api", profileRoutes);
 
-// Dynamic port for hosting (Cloud Run)
-const PORT = process.env.PORT || 5000;
+// Cloud Run sets PORT automatically
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
