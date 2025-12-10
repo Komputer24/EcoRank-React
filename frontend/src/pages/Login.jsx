@@ -1,7 +1,9 @@
 import './Login.css';
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -17,6 +19,7 @@ export default function Login() {
 
       if (res.ok) {
         alert("Logged in successfully!"); // clear success message
+        navigate("/dashboard");
       } else {
         alert("Login failed: " + (data.error || "User not found"));
       }

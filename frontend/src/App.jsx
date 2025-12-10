@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import WelcomePage from "./pages/WelcomePage";
+import Dashboard from "./pages/Dashboard";
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/welcome" element={<WelcomePage />} />
+      <Route path="/dashboard" element={<Dashboard />} />
     </Routes>
   );
 }
