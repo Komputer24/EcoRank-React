@@ -1,51 +1,49 @@
-import express from "express";
-import cors from "cors";
+import Fastify from "fastify";
+import cors from "@fastify/cors";
 import dotenv from "dotenv";
+
+dotenv.config();
 
 import authRoutes from "./routes/auth.js";
 import profileRoutes from "./routes/profile.js";
 
-dotenv.config();
+const app = Fastify({
+  logger: true
+});
 
-const app = express();
-
-// Allowed origins (dev + production)
+// Allowed origins
 const allowedOrigins = [
-  process.env.FRONTEND_URL,   // production frontend
-  "http://localhost:5174"     // local dev frontend
+  process.env.FRONTEND_URL,
+  "http://localhost:5174"
 ];
 
-// CORS middleware
-app.use(cors({
-  origin: (origin, callback) => {
+// CORS setup
+await app.register(cors, {
+  origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+      cb(null, true);
     } else {
-      // Do not throw an error — just block with a response
-      callback(null, false);
+      cb(new Error("Not allowed"), false);
     }
   },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true,
-}));
-
-// Handle preflight OPTIONS requests
-app.options("*", cors());
-
-// Body parser
-app.use(express.json());
-
-// Health check route (optional but useful)
-app.get("/", (req, res) => {
-  res.json({ status: "Server is running" });
+  credentials: true
 });
 
-// API routes
-app.use("/api", authRoutes);
-app.use("/api", profileRoutes);
+// Health check
+app.get("/", () => {
+  return { status: "Server running" };
+});
 
-// Cloud Run sets PORT automatically
+// Register route groups
+app.register(authRoutes, { prefix: "/api" });
+app.register(profileRoutes, { prefix: "/api" });
+
+// Start server
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
+app.listen({ port: PORT, host: "0.0.0.0" })
+  .then(() => console.log(`Server running on ${PORT}`))
+  .catch(err => {
+    console.error(err);
+    process.exit(1);
+  });

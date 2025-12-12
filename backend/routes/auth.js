@@ -1,69 +1,57 @@
-import express from "express";
 import supabase from "../config/supabase.js";
 
-const router = express.Router();
+export default async function authRoutes(app) {
 
-// Signup route
-router.post("/signup", async (req, res) => {
-  const { email, password } = req.body;
+  // Signup
+  app.post("/signup", async (req, res) => {
+    const { email, password } = req.body;
 
-  try {
-    // 1. Create the user in Supabase Auth
-    const { data: userData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true
-    });
+    const { data: userData, error: authError } =
+      await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true
+      });
 
-    if (authError) return res.status(400).json({ error: authError.message });
+    if (authError) return res.status(400).send({ error: authError.message });
 
-    const userId = userData.id; // Supabase Auth user ID
+    const userId = userData.id;
 
-    // 2. Create a profile row in your profiles table
-    const { data: profileData, error: profileError } = await supabase
-      .from("profiles")
-      .insert({
-        id: userId,   // match the auth user ID
-        name: "",
-        bio: "",
-        avatar_url: ""
-      })
-      .select()
-      .single();
+    const { data: profileData, error: profileError } =
+      await supabase
+        .from("profiles")
+        .insert({
+          id: userId,
+          name: "",
+          bio: "",
+          avatar_url: ""
+        })
+        .select()
+        .single();
 
-    if (profileError) return res.status(400).json({ error: profileError.message });
+    if (profileError) return res.status(400).send({ error: profileError.message });
 
-    res.json({
-      message: "User created and profile initialized",
+    return {
+      message: "User created",
       user: userData,
       profile: profileData,
-      token: userData.session?.access_token // optional
-    });
+      token: userData.session?.access_token
+    };
+  });
 
-  } catch (err) {
-    console.error("Signup error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Login route
-router.post("/login", async (req, res) => {
-  try {
+  // Login
+  app.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) return res.status(404).json({ error: "Invalid email or password" });
+    if (error) return res.status(404).send({ error: "Invalid email or password" });
 
-    res.json({
+    return {
       message: "Logged in",
       user: data.user,
       token: data.session?.access_token
-    });
-  } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+    };
+  });
 
-export default router;
+}
