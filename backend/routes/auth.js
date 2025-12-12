@@ -2,23 +2,24 @@ import supabase from "../config/supabase.js";
 
 export default async function authRoutes(app) {
 
-  // Signup
+  // SIGNUP
   app.post("/signup", async (req, res) => {
     const { email, password } = req.body;
 
-    const { data: userData, error: authError } =
-      await supabase.auth.admin.createUser({
+    try {
+      const { data: userData, error: authError } = await supabase.auth.admin.createUser({
         email,
         password,
         email_confirm: true
       });
 
-    if (authError) return res.status(400).send({ error: authError.message });
+      if (authError) {
+        return res.status(400).send({ error: authError.message });
+      }
 
-    const userId = userData.id;
+      const userId = userData.user.id;
 
-    const { data: profileData, error: profileError } =
-      await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .insert({
           id: userId,
@@ -29,29 +30,37 @@ export default async function authRoutes(app) {
         .select()
         .single();
 
-    if (profileError) return res.status(400).send({ error: profileError.message });
+      if (profileError) {
+        return res.status(400).send({ error: profileError.message });
+      }
 
-    return {
-      message: "User created",
-      user: userData,
-      profile: profileData,
-      token: userData.session?.access_token
-    };
+      res.send({
+        message: "User created and profile initialized",
+        user: userData.user,
+        profile: profileData,
+        token: userData.session?.access_token
+      });
+
+    } catch (err) {
+      res.status(500).send({ error: err.message });
+    }
   });
 
-  // Login
+  // LOGIN
   app.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) return res.status(404).send({ error: "Invalid email or password" });
+    if (error) {
+      return res.status(400).send({ error: "Invalid email or password" });
+    }
 
-    return {
+    res.send({
       message: "Logged in",
       user: data.user,
       token: data.session?.access_token
-    };
+    });
   });
 
 }
