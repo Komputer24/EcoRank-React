@@ -62,5 +62,4 @@ export default async function authRoutes(app) {
       token: data.session?.access_token
     });
   });
-
 }
